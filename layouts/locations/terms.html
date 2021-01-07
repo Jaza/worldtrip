@@ -1,0 +1,71 @@
+{{ define "head" }}
+<script src="https://maps.googleapis.com/maps/api/js?{{ if .Site.Params.googlemapsapikey }}key={{ .Site.Params.googlemapsapikey }}&{{ end }}v=3.exp&sensor=false"></script>
+<script type="text/javascript" src="/js/location-map.js"></script>
+{{ end }}
+
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+<div class="content">
+{{ if .Content }}{{ .Content }}{{ end }}
+
+{{- partial "countriesandcities.html" (dict "c" . "locs" .Data.Terms ) -}}
+
+{{ if (.Scratch.Get "countriesAndCities") }}
+    <div id="nodemap"></div>
+
+    <div class="category-navigation">
+    <ul class="menu">
+    {{ range (.Scratch.Get "countriesAndCities") }}
+      <li class="expanded">
+        <a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="category-toc-node-count">({{ .Count }})</span>
+        {{ if .Cities }}
+        <ul class="menu">
+          {{ range .Cities }}
+          <li class="leaf"><a href="{{ .RelPermalink }}">{{ .Title }}</a> <span class="category-toc-node-count">({{ .Count }})</span></li>
+          {{ end }}
+        </ul>
+        {{ end }}
+      </li>
+    {{ end }}
+    </ul>
+    </div><!-- /.category-navigation -->
+{{ else }}
+    <p><em>No locations found.</em></p>
+{{ end }}
+</div><!-- /.content -->
+
+</div><!-- /.node -->
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}
+
+{{ define "foot" }}
+{{- partial "countriesandcities.html" (dict "c" . "locs" .Data.Terms ) -}}
+{{ $numCountries := len (.Scratch.Get "countriesAndCities") }}
+<script type="text/javascript">
+var countries = [
+{{ if $numCountries }}
+  {{ range $i, $e := (.Scratch.Get "countriesAndCities") }}
+   {lat: {{ $e.Lat }}, lon: {{ $e.Lon }}, title: {{ $e.Title }}, url: {{ $e.RelPermalink }}}{{ if not (eq $i (sub $numCountries 1)) }},{{ end }}
+  {{ end }}
+{{ end }}
+];
+
+{{ $numCities := len (.Scratch.Get "cities") }}
+var cities = [
+{{ if $numCities }}
+  {{ range $i, $e := (.Scratch.Get "cities") }}
+    {lat: {{ $e.Lat }}, lon: {{ $e.Lon }}, title: {{ $e.Title }}, url: {{ $e.RelPermalink }}}{{ if not (eq $i (sub $numCities 1)) }},{{ end }}
+  {{ end }}
+{{ end }}
+];
+</script>
+{{ end }}

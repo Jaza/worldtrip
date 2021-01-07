@@ -1,0 +1,32 @@
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+<div class="content">
+{{ if .Content }}{{ .Content }}{{ end }}
+
+{{ if .Data.Pages }}
+    {{ range .Data.Pages.ByDate.Reverse }}
+      <div class="node">
+        <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+
+        <div class="content">
+          {{ .Summary }}
+        </div><!-- /.content -->
+      </div><!-- /.node -->
+    {{ end }}
+{{ else }}
+    <p><em>No pages found.</em></p>
+{{ end }}
+</div><!-- /.content -->
+
+</div><!-- /.node -->
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}

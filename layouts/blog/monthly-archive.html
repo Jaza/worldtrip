@@ -1,0 +1,32 @@
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+<div class="content">
+{{ if .Content }}{{ .Content }}{{ end }}
+
+{{ if .Pages }}
+    <div class="item-list">
+    <ul>
+
+    {{ range sort .Pages "File.Path" }}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> (count goes here)</li>
+    {{ end }}
+
+    </ul>
+    </div><!-- /.item-list -->
+{{ else }}
+    <p><em>No pages found.</em></p>
+{{ end }}
+</div><!-- /.content -->
+
+</div><!-- /.node -->
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}

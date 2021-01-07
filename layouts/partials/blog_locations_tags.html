@@ -1,0 +1,18 @@
+<div class="taxonomy">
+  <span class="taxonomy-filed">Filed in:</span>
+  {{ if .Params.locations }}
+    {{ range $i, $e := .Params.locations }}
+    {{ $url := $e | printf "%s/%s/" "/locations" }}
+    {{ $t := $.GetPage $url }}
+      {{ if $i }} &#149; {{ end }}<a href="{{ $url }}">{{ $t.Title }}</a>
+    {{ end }}
+  {{ end }}
+  {{ if .Params.tags }}
+    {{ if .Params.locations }} &#149; {{ end }}
+    {{ range $i, $e := .Params.tags }}
+      {{ $url := $e | printf "%s/%s/" "/tags" }}
+      {{ $t := $.GetPage $url }}
+      {{ if $i }} &#149; {{ end }}<a href="{{ $url }}">{{ $t.Title }}</a>
+    {{ end }}
+  {{ end }}
+</div>

@@ -1,0 +1,29 @@
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+<div class="content">
+{{ if .Content }}{{ .Content }}{{ end }}
+
+{{ $blogPages := where .Pages "Type" "blog" }}
+{{ if $blogPages }}
+  {{ range (.Paginate $blogPages).Pages.ByDate.Reverse }}
+    {{- partial "blog_teaser.html" . -}}
+  {{ end }}
+
+  {{ partial "pagination.html" . }}
+{{ else }}
+  <p><em>No blog entries found.</em></p>
+{{ end }}
+</div><!-- /.content -->
+
+</div><!-- /.node -->
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}

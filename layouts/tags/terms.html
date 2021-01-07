@@ -1,0 +1,28 @@
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+<div class="content">
+{{ if .Content }}{{ .Content }}{{ end }}
+
+{{- partial "weightedtags.html" (dict "c" . "tags" .Data.Terms "steps" 6 ) -}}
+
+{{ if (.Scratch.Get "weightedTags") }}
+    {{ range (.Scratch.Get "weightedTags") }}
+<a href="{{ .RelPermalink }}" class="tagadelic level{{ .Weight }}">{{ .Title }}</a>
+    {{ end }}
+{{ else }}
+    <p><em>No tags found.</em></p>
+{{ end }}
+</div><!-- /.content -->
+
+</div><!-- /.node -->
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}

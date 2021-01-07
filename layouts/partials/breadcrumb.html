@@ -1,0 +1,32 @@
+<div id="breadcrumb-wrap1"><div id="breadcrumb-wrap2"><div id="breadcrumb-wrap3"><div id="breadcrumb-wrap4"><div id="breadcrumb-wrap5"><p id="breadcrumb">
+
+<a href="/">Home</a> &raquo;
+
+{{ if and (eq .Section "blog") (or .IsPage (findRE "^/blog/[^/]+/$" .RelPermalink)) }}
+  <a href="/blog/">Blog</a> &raquo;
+
+  {{ if findRE "^/blog/monthly-archive/\\d+/$" .RelPermalink }}
+  <a href="/blog/monthly-archive/">Monthly archive</a> &raquo;
+  {{ end }}
+{{ end }}
+
+{{ if and (eq .Section "locations") (eq .Kind "term") }}
+  <a href="/locations/">Locations</a> &raquo;
+
+  {{ if findRE "^/locations/([^/]+)/[^/]+/$" .RelPermalink }}
+    {{ $parentPath := replaceRE "[^/]+/$" "" .RelPermalink | replaceRE "^/" "" }}
+    {{ $parentSlug := replace $parentPath "/locations/" "" | replaceRE "[^/]+/$" "" }}
+    {{ $parent := .Site.GetPage $parentPath }}
+    <a href="/{{ $parentPath }}">{{ $parent.Title }}</a> &raquo;
+  {{ end }}
+{{ end }}
+
+{{ if and (eq .Section "tags") (eq .Kind "term") }}
+  <a href="/tags/">Tags</a> &raquo;
+{{ end }}
+
+{{ if and (eq .Section "about") .IsPage }}
+  <a href="/about/">About</a> &raquo;
+{{ end }}
+
+</p></div><!-- /#breadcrumb-wrap5 --></div><!-- /#breadcrumb-wrap4 --></div><!-- /#breadcrumb-wrap3 --></div><!-- /#breadcrumb-wrap2 --></div><!-- /#breadcrumb-wrap1 -->

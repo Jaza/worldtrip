@@ -1,0 +1,37 @@
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+<div class="content">
+{{ if .Content }}{{ .Content }}{{ end }}
+
+{{ $photos := slice }}
+
+{{ range (readDir "content/gallery") }}
+  {{ if not (eq .Name "_index.html") }}
+    {{ $filename := print "/gallery/" .Name "/index.md" }}
+    {{ $photos = $photos | append ( $.Site.GetPage $filename ) }}
+  {{ end }}
+{{ end }}
+
+{{ if $photos }}
+    {{ range (.Paginate $photos).Pages.Reverse }}
+      {{ partial "galleryphoto.html" (dict "photo" . "galleryphotosbaseurl" $.Site.Params.galleryphotosbaseurl) }}
+    {{ end }}
+
+    {{ partial "pagination.html" . }}
+{{ else }}
+    <p><em>No photos found.</em></p>
+{{ end }}
+</div><!-- /.content -->
+
+</div><!-- /.node -->
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}

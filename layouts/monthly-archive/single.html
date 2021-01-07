@@ -1,0 +1,53 @@
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+<div class="content">
+{{ $archYear := (replaceRE "^\\w+, " "" .Title) }}
+{{ $archMonth := (replaceRE ", \\d+$" "" .Title) }}
+{{ $prevDay := "" }}
+
+{{ $blogPages := where .Site.Pages "Type" "blog" }}
+{{ if $blogPages }}
+  {{ range $blogPages.ByDate }}
+      {{ if and (eq (.Date.Format "2006") $archYear) (eq (.Date.Format "January") $archMonth) }}
+          {{ $currDayOrdinal := ( cond (in (slice 1 21 31) .Date.Day) "st" ( cond (in (slice 2 22) .Date.Day) "nd" (cond (in (slice 3 23) .Date.Day) "rd" "th") ) ) }}
+          {{ $currDay := print (.Date.Format "Monday") " " (.Date.Format "2") $currDayOrdinal }}
+
+          {{ if or (not $prevDay) (ne $currDay $prevDay) }}
+            {{ if $prevDay }}
+  </ul>
+  </div><!-- /.item-list -->
+            {{ end }}
+
+  <h2>{{ $currDay }}</h2>
+  <div class="item-list">
+  <ul>
+          {{ end }}
+          <li><a href="{{ .RelPermalink }}">{{ .Title }}</a></li>
+
+          {{ $prevDay = $currDay }}
+      {{ end }}
+  {{ end }}
+
+  {{ if $prevDay }}
+  </ul>
+  </div><!-- /.item-list -->
+  {{ else }}
+  <p><em>No blog posts found.</em></p>
+  {{ end }}
+{{ else }}
+  <p><em>No blog posts found.</em></p>
+{{ end }}
+</div><!-- /.content -->
+
+</div><!-- /.node -->
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}

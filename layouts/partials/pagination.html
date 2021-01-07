@@ -1,0 +1,49 @@
+{{ $pag := $.Paginator }}
+{{ if gt $pag.TotalPages 1 -}}
+<div id="pager">
+  {{ if $pag.HasPrev -}}
+    {{ with $pag.First -}}
+    <a href="{{ .URL }}" class="pager-first" title="Go to first page">« first</a>
+    {{ end -}}
+
+    <a href="{{ $pag.Prev.URL }}" class="{{ if eq $pag.Prev.URL $pag.First.URL }}pager-first{{ else }}pager-previous{{ end }}" title="Go to previous page">‹ previous</a>
+  {{ end -}}
+
+  <span class="pager-list">
+
+  {{- $ellipsed := false -}}
+  {{- $shouldEllipse := false -}}
+  {{- range $pag.Pagers -}}
+  {{- $right := sub .TotalPages .PageNumber -}}
+  {{- $showNumber := or (le .PageNumber 3) (eq $right 0) -}}
+  {{- $showNumber := or $showNumber (le .TotalPages 5) -}}{{/* Issue #7523 */}}
+  {{- $showNumber := or $showNumber (and (gt .PageNumber (sub $pag.PageNumber 2)) (lt .PageNumber (add $pag.PageNumber 2))) -}}
+  {{- if $showNumber -}}
+    {{- $ellipsed = false -}}
+    {{- $shouldEllipse = false -}}
+  {{- else -}}
+    {{- $shouldEllipse = not $ellipsed -}}
+    {{- $ellipsed = true -}}
+  {{- end -}}
+  {{- if $showNumber }}
+    {{ if eq . $pag -}}
+    <strong class="pager-current">{{ .PageNumber }}</strong>
+    {{ else -}}
+    <a href="{{ .URL }}" class="pager-next" title="Go to page {{ .PageNumber }}">{{ .PageNumber }}</a>
+    {{ end -}}
+  {{- else if $shouldEllipse }}
+    <span class="pager-ellipsis">…</span>
+  {{- end -}}
+  {{- end }}
+
+  </span><!-- /.pager-list -->
+
+  {{ if $pag.HasNext -}}
+    <a href="{{ $pag.Next.URL }}" class="{{ if eq $pag.Next.URL $pag.Last.URL }}pager-last{{ else }}pager-next{{ end }}" title="Go to next page">next ›</a>
+
+    {{- with $pag.Last }}
+    <a href="{{ .URL }}" class="pager-last" title="Go to last page">last »</a>
+    {{- end }}
+  {{ end -}}
+</div>
+{{ end }}

@@ -1,0 +1,9 @@
+<div class="forum-topic-navigation">
+  {{ if .PrevInSection }}
+  <a href="{{ .PrevInSection.RelPermalink }}" class="topic-previous" title="Go to previous story">‹ {{ .PrevInSection.Title }}</a>
+  {{ end }}
+  {{ if .NextInSection }}
+  <a href="{{ .NextInSection.RelPermalink }}" class="topic-next" title="Go to next story">{{ .NextInSection.Title }} ›</a>
+  {{ end }}
+  <br class="clear" />
+</div>

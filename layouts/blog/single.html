@@ -1,0 +1,45 @@
+{{ define "main" }}
+<div id="main-wrapper">
+{{- partial "breadcrumb.html" . -}}
+<div id="main">
+
+<h1>{{ .Title }}</h1>
+
+<div class="node">
+
+{{ if .Date }}
+<div class="submitted">{{ .Date.Format "Monday" }}, {{ .Date.Format "2" }}{{ if in (slice 1 21 31) .Date.Day}}st{{ else if in (slice 2 22) .Date.Day}}nd{{ else if in (slice 3 23) .Date.Day}}rd{{ else }}th{{ end }} {{ .Date.Format "Jan 2006" }}.</div>
+{{ end }}
+
+<div class="content">
+{{ if .Content }}{{ .Content }}{{ end }}
+
+{{- partial "blog_prev_next.html" . -}}
+</div><!-- /.content -->
+
+{{ if or .Params.tags .Params.locations }}
+{{- partial "blog_locations_tags.html" . -}}
+{{ end }}
+
+</div><!-- /.node -->
+
+{{ $comments := slice }}
+
+{{ $filePrefix := (print "/blog/" .File.BaseFileName "/") }}
+{{ $dirToRead := "content/blog/" }}
+{{ $pathToMatch := (print "^" .File.BaseFileName "--") }}
+
+{{ range (readDir $dirToRead) }}
+  {{ if findRE $pathToMatch .Name }}
+    {{ $filename := print "/blog/" .Name "/index.md" }}
+    {{ $comments = $comments | append ( $.Site.GetPage $filename ) }}
+  {{ end }}
+{{ end }}
+
+{{- if $comments -}}
+  {{- partial "blog_comments.html" (dict "site" $.Site "page" $.Page "comments" $comments) -}}
+{{ end }}
+
+</div><!-- /#main -->
+</div><!-- /#main-wrapper -->
+{{ end }}

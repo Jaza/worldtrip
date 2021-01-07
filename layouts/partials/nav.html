@@ -1,0 +1,15 @@
+{{ $len := len .Site.Menus.main }}
+{{ $pageURL := .RelPermalink }}
+
+<nav role="navigation">
+  <ul>
+  {{ $current := . }}
+  {{ $isHome := .IsHome }}
+  {{ range $i, $e := .Site.Menus.main }}
+    {{ $active := or (and (not (eq $e.URL "/")) (hasPrefix $pageURL $e.URL)) (and $isHome (eq $e.URL "/")) }}
+    <li class="{{ if $active }}active{{ end }}{{ if not $i }} first{{ end }}{{ if eq $i (sub $len 1) }} last{{ end }}">
+      <a href="{{ $e.URL }}" class="{{ if $active }}active{{ end }}">{{ $e.Name | safeHTML }}</a>
+    </li>
+  {{ end }}
+  </ul>
+</nav>

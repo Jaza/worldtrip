@@ -1,0 +1,7 @@
+  <header>
+    {{ if .IsHome }}{{ "<h1 id=\"site-name\">" | safeHTML }}{{ else }}{{ "<div id=\"site-name\">" | safeHTML }}{{ end }}{{ .Site.Title }}{{ if .IsHome }}{{ "</h1>" | safeHTML }}{{ else }}{{ "</div>" | safeHTML }}{{ end }}
+
+    <div id="logo">
+      <a href="/" title="Home"><img src="/img/logo.png" alt="Home" /></a>
+    </div>
+  </header>

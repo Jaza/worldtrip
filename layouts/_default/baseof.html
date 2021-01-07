@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="{{ .Site.LanguageCode }}" dir="ltr" class="no-js">
+    <head>
+    {{- partial "head.html" . -}}
+    {{- block "head" . }}{{- end }}
+    </head>
+    <body>
+    <div id="wrapper">
+        {{- partial "header.html" . -}}
+        <div id="content">
+        {{- block "main" . }}{{- end }}
+        </div><!-- /#content -->
+        <div class="clear"></div>
+        <div id="bot-left"><div id="bot-right"><div id="bottom">
+        </div><!-- /#bottom --></div><!-- /#bot-right --></div><!-- /#bot-left -->
+        <footer>
+        {{- partial "nav.html" . -}}
+        {{- partial "footer.html" . -}}
+        </footer>
+    </div><!-- /#wrapper -->
+    {{- block "foot" . }}{{- end }}
+    </body>
+</html>

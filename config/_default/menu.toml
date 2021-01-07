@@ -1,0 +1,35 @@
+[[main]]
+identifier = "home"
+name = "Home"
+url = "/"
+weight = -100
+
+[[main]]
+identifier = "blog"
+name = "Blog"
+url = "/blog/"
+weight = -60
+
+[[main]]
+identifier = "gallery"
+name = "Gallery"
+url = "/gallery/"
+weight = -20
+
+[[main]]
+identifier = "locations"
+name = "Locations"
+url = "/locations/"
+weight = 20
+
+[[main]]
+identifier = "tags"
+name = "Tags"
+url = "/tags/"
+weight = 60
+
+[[main]]
+identifier = "about"
+name = "About"
+url = "/about/"
+weight = 100

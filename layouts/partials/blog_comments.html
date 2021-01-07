@@ -1,0 +1,14 @@
+<a id="comment"></a>
+
+{{ range .comments }}
+{{ $commentPermalink := (print "comment-" (replaceRE "^.+--.+--" "" .File.ContentBaseName)) }}
+<a id="{{ $commentPermalink }}"></a>
+<div class="comment">
+  <h3 class="title"><a href="{{ $.page.RelPermalink }}#{{ $commentPermalink }}">{{ .Title }}</a></h3>
+  <div class="submitted">{{ if .Params.author_url }}<a href="{{ .Params.author_url }}" target="_blank">{{ end }}{{ .Params.author_name }}{{ if .Params.author_url }}</a>{{ end }} &ndash; {{ .Date.Format "2" }}{{ if in (slice 1 21 31) .Date.Day}}st{{ else if in (slice 2 22) .Date.Day}}nd{{ else if in (slice 3 23) .Date.Day}}rd{{ else }}th{{ end }} {{ .Date.Format "Jan 2006" }}.</div>
+
+  <div class="content">
+  {{ .Content }}
+  </div>
+</div><!-- /.comment -->
+{{ end }}

@@ -1,0 +1,4 @@
+{{ $filename := (.Get 0) }}
+{{ $photo := (.Site.GetPage (printf "/gallery/%s/index.md" $filename)) }}
+
+{{ partial "galleryphoto.html" (dict "photo" $photo "galleryphotosbaseurl" .Site.Params.galleryphotosbaseurl) }}

@@ -1,0 +1,34 @@
+{{- .c.Scratch.Delete "countriesAndCities" -}}
+{{- .c.Scratch.Add "countriesAndCities" slice -}}
+{{- .c.Scratch.Delete "cities" -}}
+{{- .c.Scratch.Add "cities" slice -}}
+{{- if .locs -}}
+  {{- .c.Scratch.Set "lastCountrySlug" nil -}}
+  {{- .c.Scratch.Set "currCountry" nil -}}
+  {{- .c.Scratch.Set "currCities" slice -}}
+  {{- range .locs.Alphabetical -}}
+    {{- $currCountrySlug := cond (in .Term "/") (replaceRE "/[^/]+$" "" .Term) .Term -}}
+    {{- $termURL := printf "/locations/%s/" .Term -}}
+    {{- $termPage := $.c.Site.GetPage $termURL -}}
+    {{- if and ($.c.Scratch.Get "lastCountrySlug") (or (not (in .Term "/")) (and (in .Term "/") (not (eq $currCountrySlug ($.c.Scratch.Get "lastCountrySlug"))))) -}}
+      {{- $.c.Scratch.Add "countriesAndCities" (slice (dict "Title" (index ($.c.Scratch.Get "currCountry") "Title") "RelPermalink" (index ($.c.Scratch.Get "currCountry") "RelPermalink") "Lat" (index ($.c.Scratch.Get "currCountry") "Lat") "Lon" (index ($.c.Scratch.Get "currCountry") "Lon") "Count" (index ($.c.Scratch.Get "currCountry") "Count") "Cities" ($.c.Scratch.Get "currCities"))) -}}
+      {{- $.c.Scratch.Add "cities" ($.c.Scratch.Get "currCities") -}}
+      {{- $.c.Scratch.Delete "currCities" -}}
+      {{- $.c.Scratch.Set "currCities" slice -}}
+    {{- end -}}
+    {{- if not (in .Term "/") -}}
+      {{- $.c.Scratch.Set "currCountry" (dict "Title" $termPage.Title "RelPermalink" $termPage.RelPermalink "Lat" $termPage.Params.lat "Lon" $termPage.Params.lon "Count" ($termPage.Pages | uniq | len)) -}}{{/* Have to do this because .Pages contains duplicates (for nested terms), so can't rely on .Count */}}
+    {{- end -}}
+    {{- if and (in .Term "/") (not (eq $currCountrySlug ($.c.Scratch.Get "lastCountrySlug"))) -}}
+      {{- $parentURL := printf "/locations/%s/" $currCountrySlug -}}
+      {{- $parentPage := $.c.Site.GetPage $parentURL -}}
+      {{- $.c.Scratch.Set "currCountry" (dict "Title" $parentPage.Title "RelPermalink" $parentPage.RelPermalink "Lat" $parentPage.Params.lat "Lon" $parentPage.Params.lon "Count" ($parentPage.Pages | uniq | len)) -}}{{/* Have to do this because .Pages contains duplicates (for nested terms), so can't rely on .Count */}}
+    {{- end -}}
+    {{- if in .Term "/" -}}
+      {{- $.c.Scratch.Add "currCities" (slice (dict "Title" $termPage.Title "RelPermalink" $termPage.RelPermalink "Lat" $termPage.Params.lat "Lon" $termPage.Params.lon "Count" ($termPage.Pages | uniq | len))) -}}{{/* Have to do this because .Pages contains duplicates (for nested terms), so can't rely on .Count */}}
+    {{- end -}}
+    {{- $.c.Scratch.Set "lastCountrySlug" $currCountrySlug -}}
+  {{- end -}}
+  {{- $.c.Scratch.Add "countriesAndCities" (slice (dict "Title" (index ($.c.Scratch.Get "currCountry") "Title") "RelPermalink" (index ($.c.Scratch.Get "currCountry") "RelPermalink") "Lat" (index ($.c.Scratch.Get "currCountry") "Lat") "Lon" (index ($.c.Scratch.Get "currCountry") "Lon") "Count" (index ($.c.Scratch.Get "currCountry") "Count") "Cities" ($.c.Scratch.Get "currCities"))) -}}
+  {{- $.c.Scratch.Add "cities" ($.c.Scratch.Get "currCities") -}}
+{{- end -}}
