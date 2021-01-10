@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+import glob
 import os
 import re
+import sys
 from collections import namedtuple
 
 
@@ -8,6 +10,7 @@ LEGACY_REPO_PATH_ENVVAR_NAME = "WORLDTRIP_LEGACY_REPO_PATH"
 LEGACY_BLOG_PAGES_RELATIVE_PATH = "pages/blog"
 LEGACY_BLOG_CONTENT_FULL_RELATIVE_PATH = "content/blog/full"
 LEGACY_BLOG_CONTENT_TEASER_RELATIVE_PATH = "content/blog/teaser"
+LEGACY_BLOG_TAGS_RELATIVE_PATH = "mappings/blog_tags"
 CURRENT_BLOG_CONTENT_RELATIVE_PATH = "content/blog"
 
 LEGACY_BLOG_TITLE_LINE_PREFIX = "$title = '"
@@ -27,11 +30,16 @@ summary = \"\"\"
 {content}
 """
 
+CURRENT_BLOG_POST_TZ_OFFSET = "+10:00"
+
+PRINT_PROGRESS_DOT_EVERY_X_ITEMS = 100
+
 
 DirPathsInRepos = namedtuple("DirPathsInRepos", [
     "legacy_pages_path",
     "legacy_content_full_path",
     "legacy_content_teaser_path",
+    "legacy_blog_tags_path",
     "current_content_path"])
 
 
@@ -39,6 +47,7 @@ BlogPostFilePaths = namedtuple("BlogPostFilePaths", [
     "legacy_page_file_path",
     "legacy_content_full_file_path",
     "legacy_content_teaser_file_path",
+    "legacy_blog_tags_glob_path",
     "current_content_file_path"])
 
 
@@ -89,6 +98,8 @@ def get_dir_paths_in_repos(legacy_repo_path, current_repo_path):
         legacy_repo_path, LEGACY_BLOG_CONTENT_FULL_RELATIVE_PATH)
     legacy_content_teaser_path = get_dir_path_in_repo(
         legacy_repo_path, LEGACY_BLOG_CONTENT_TEASER_RELATIVE_PATH)
+    legacy_blog_tags_path = get_dir_path_in_repo(
+        legacy_repo_path, LEGACY_BLOG_TAGS_RELATIVE_PATH)
     current_content_path = get_dir_path_in_repo(
         current_repo_path, CURRENT_BLOG_CONTENT_RELATIVE_PATH)
 
@@ -96,6 +107,7 @@ def get_dir_paths_in_repos(legacy_repo_path, current_repo_path):
         legacy_pages_path,
         legacy_content_full_path,
         legacy_content_teaser_path,
+        legacy_blog_tags_path,
         current_content_path)
 
 
@@ -108,6 +120,28 @@ def get_slug_from_filename(page_filename):
         r"^[0-9]{4}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\-\-",
         "",
         page_filename)
+
+
+def get_legacy_datestr_from_filename(page_filename):
+    return re.sub(r"\-\-.*$", "", page_filename)
+
+
+def get_current_datestr_from_legacy_datestr(legacy_datestr):
+    match = re.match(
+        r"^(?P<year>[0-9]{4})\-(?P<month>[0-9]{2})\-(?P<day>[0-9]{2})\-"
+        r"(?P<hour>[0-9]{2})\-(?P<minute>[0-9]{2})\-(?P<second>[0-9]{2})$",
+        legacy_datestr)
+
+    if not match:
+        raise ValueError(
+            "Legacy date {0} is not in YYYY-MM-DD-HH-MM-SS format".format(
+                legacy_datestr))
+
+    groupdict = match.groupdict()
+    groupdict["tz_offset"] = CURRENT_BLOG_POST_TZ_OFFSET
+
+    return "{year}-{month}-{day}T{hour}:{minute}:{second}{tz_offset}".format(
+        **groupdict)
 
 
 def get_title_from_slug(slug):
@@ -173,26 +207,65 @@ def get_blog_post_file_paths(dir_paths_in_repos, legacy_page_file_path):
             "Legacy content teaser file path {0} is not a valid file".format(
                 legacy_content_teaser_file_path))
 
+    legacy_blog_tags_glob_path = "{0}/{1}*.php".format(
+        dir_paths_in_repos.legacy_blog_tags_path, page_filename)
+
     return BlogPostFilePaths(
         legacy_page_file_path,
         legacy_content_full_file_path,
         legacy_content_teaser_file_path,
+        legacy_blog_tags_glob_path,
         current_content_file_path)
+
+
+def get_legacy_blog_post_content(file_path):
+    content = ""
+    passed_header = False
+
+    with open(file_path) as f:
+        line = None
+
+        while (line is None) or line:
+            line = f.readline()
+
+            if passed_header:
+                content += line
+            elif line == "?>\n":
+                passed_header = True
+
+    if content[-1] == "\n":
+        content = content[:-1]
+
+    return content
+
+
+def get_legacy_blog_post_tags(page_filename, legacy_blog_tags_glob_path):
+    for tag_path in glob.glob(legacy_blog_tags_glob_path):
+        yield tag_path.replace(page_filename, "").replace(".php", "").split("--")[1]
+
 
 
 def get_current_blog_post_file_content(blog_post_file_paths, title):
     page_filename = get_filename_from_path(
         blog_post_file_paths.legacy_page_file_path)
     slug = get_slug_from_filename(page_filename)
+    legacy_datestr = get_legacy_datestr_from_filename(page_filename)
+    current_datestr = get_current_datestr_from_legacy_datestr(legacy_datestr)
+    summary = get_legacy_blog_post_content(
+        blog_post_file_paths.legacy_content_teaser_file_path)
+    content = get_legacy_blog_post_content(
+        blog_post_file_paths.legacy_content_full_file_path)
+    tags = [x for x in get_legacy_blog_post_tags(
+        page_filename, blog_post_file_paths.legacy_blog_tags_glob_path)]
 
     return CURRENT_BLOG_POST_FILE_CONTENT_TPL.format(**{
         "title": title,
         "slug": slug,
-        "date": "tuesday!",
-        "tags": "taggytag",
+        "date": current_datestr,
+        "tags": str(tags).replace("'", "\""),
         "locations": "mars",
-        "summary": "in short",
-        "content": "bla bla bla"})
+        "summary": summary,
+        "content": content})
 
 
 def import_legacy_blog_post(legacy_page_file_path, dir_paths_in_repos):
@@ -210,15 +283,29 @@ def import_legacy_blog_post(legacy_page_file_path, dir_paths_in_repos):
     return True
 
 
+def print_progress_dot(i, num_items):
+    if i and ((not i % PRINT_PROGRESS_DOT_EVERY_X_ITEMS) or (i + 1 == num_items)):
+        sys.stdout.write(".")
+
+        if i + 1 == num_items:
+            sys.stdout.write("\n")
+
+        sys.stdout.flush()
+
+
 def import_legacy_blog_posts(dir_paths_in_repos):
     legacy_pages_path = dir_paths_in_repos.legacy_pages_path
     num_blog_posts_imported = 0
     num_blog_posts_existing = 0
 
-    for legacy_page_path in os.listdir(legacy_pages_path):
+    page_paths = os.listdir(legacy_pages_path)
+    num_items = len(page_paths)
+
+    for i, legacy_page_path in enumerate(page_paths):
         is_imported = import_legacy_blog_post(
             os.path.realpath(os.path.join(legacy_pages_path, legacy_page_path)),
             dir_paths_in_repos)
+        print_progress_dot(i, num_items)
 
         if is_imported:
             num_blog_posts_imported += 1
