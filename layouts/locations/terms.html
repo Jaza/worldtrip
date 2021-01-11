@@ -1,5 +1,10 @@
 {{ define "head" }}
-<script src="https://maps.googleapis.com/maps/api/js?{{ if .Site.Params.googlemapsapikey }}key={{ .Site.Params.googlemapsapikey }}&{{ end }}v=3.exp&sensor=false"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"
+   integrity="sha512-xodZBNTC5n17Xt2atTPuE1HxjVMSvLVW9ocqUKLsCC5CXdbqCmblAshOMAS6/keqq/sMZMZ19scR4PsZChSR7A=="
+   crossorigin=""/>
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"
+   integrity="sha512-XQoYMqMTK8LvdxXYG3nZ448hOEQiglfqkJs1NOQV44cWnUrBc8PkAOcXy20w0vlaXaVUearIOBhiXZ5V3ynxwA=="
+   crossorigin=""></script>
 <script type="text/javascript" src="/js/location-map.js"></script>
 {{ end }}
 
@@ -51,6 +56,10 @@
 {{- partial "countriesandcities.html" (dict "c" . "locs" .Data.Terms ) -}}
 {{ $numCountries := len (.Scratch.Get "countriesAndCities") }}
 <script type="text/javascript">
+{{ if .Site.Params.mapboxapikey }}
+var mapbox_api_key = '{{ .Site.Params.mapboxapikey }}';
+{{ end }}
+
 var countries = [
 {{ if $numCountries }}
   {{ range $i, $e := (.Scratch.Get "countriesAndCities") }}
