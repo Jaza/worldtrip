@@ -11,6 +11,9 @@ LEGACY_BLOG_PAGES_RELATIVE_PATH = "pages/blog"
 LEGACY_BLOG_CONTENT_FULL_RELATIVE_PATH = "content/blog/full"
 LEGACY_BLOG_CONTENT_TEASER_RELATIVE_PATH = "content/blog/teaser"
 LEGACY_BLOG_TAGS_RELATIVE_PATH = "mappings/blog_tags"
+LEGACY_BLOG_COUNTRY_RELATIVE_PATH = "mappings/blog_country"
+LEGACY_BLOG_CITY_RELATIVE_PATH = "mappings/blog_city"
+LEGACY_COUNTRY_CITY_RELATIVE_PATH = "mappings/country_city"
 CURRENT_BLOG_CONTENT_RELATIVE_PATH = "content/blog"
 
 LEGACY_BLOG_TITLE_LINE_PREFIX = "$title = '"
@@ -40,6 +43,9 @@ DirPathsInRepos = namedtuple("DirPathsInRepos", [
     "legacy_content_full_path",
     "legacy_content_teaser_path",
     "legacy_blog_tags_path",
+    "legacy_blog_country_path",
+    "legacy_blog_city_path",
+    "legacy_country_city_path",
     "current_content_path"])
 
 
@@ -48,6 +54,9 @@ BlogPostFilePaths = namedtuple("BlogPostFilePaths", [
     "legacy_content_full_file_path",
     "legacy_content_teaser_file_path",
     "legacy_blog_tags_glob_path",
+    "legacy_blog_country_glob_path",
+    "legacy_blog_city_glob_path",
+    "legacy_country_city_glob_path",
     "current_content_file_path"])
 
 
@@ -100,6 +109,12 @@ def get_dir_paths_in_repos(legacy_repo_path, current_repo_path):
         legacy_repo_path, LEGACY_BLOG_CONTENT_TEASER_RELATIVE_PATH)
     legacy_blog_tags_path = get_dir_path_in_repo(
         legacy_repo_path, LEGACY_BLOG_TAGS_RELATIVE_PATH)
+    legacy_blog_country_path = get_dir_path_in_repo(
+        legacy_repo_path, LEGACY_BLOG_COUNTRY_RELATIVE_PATH)
+    legacy_blog_city_path = get_dir_path_in_repo(
+        legacy_repo_path, LEGACY_BLOG_CITY_RELATIVE_PATH)
+    legacy_country_city_path = get_dir_path_in_repo(
+        legacy_repo_path, LEGACY_COUNTRY_CITY_RELATIVE_PATH)
     current_content_path = get_dir_path_in_repo(
         current_repo_path, CURRENT_BLOG_CONTENT_RELATIVE_PATH)
 
@@ -108,6 +123,9 @@ def get_dir_paths_in_repos(legacy_repo_path, current_repo_path):
         legacy_content_full_path,
         legacy_content_teaser_path,
         legacy_blog_tags_path,
+        legacy_blog_country_path,
+        legacy_blog_city_path,
+        legacy_country_city_path,
         current_content_path)
 
 
@@ -209,12 +227,21 @@ def get_blog_post_file_paths(dir_paths_in_repos, legacy_page_file_path):
 
     legacy_blog_tags_glob_path = "{0}/{1}*.php".format(
         dir_paths_in_repos.legacy_blog_tags_path, page_filename)
+    legacy_blog_country_glob_path = "{0}/{1}*.php".format(
+        dir_paths_in_repos.legacy_blog_country_path, page_filename)
+    legacy_blog_city_glob_path = "{0}/{1}*.php".format(
+        dir_paths_in_repos.legacy_blog_city_path, page_filename)
+    legacy_country_city_glob_path = "{0}/*%s.php".format(
+        dir_paths_in_repos.legacy_country_city_path)
 
     return BlogPostFilePaths(
         legacy_page_file_path,
         legacy_content_full_file_path,
         legacy_content_teaser_file_path,
         legacy_blog_tags_glob_path,
+        legacy_blog_country_glob_path,
+        legacy_blog_city_glob_path,
+        legacy_country_city_glob_path,
         current_content_file_path)
 
 
@@ -236,13 +263,19 @@ def get_legacy_blog_post_content(file_path):
     if content[-1] == "\n":
         content = content[:-1]
 
+    content = content.replace("http://static.flickr.com", "//static.flickr.com")
+
     return content
 
 
-def get_legacy_blog_post_tags(page_filename, legacy_blog_tags_glob_path):
-    for tag_path in glob.glob(legacy_blog_tags_glob_path):
-        yield tag_path.replace(page_filename, "").replace(".php", "").split("--")[1]
+def get_legacy_blog_post_mappings(page_filename, glob_path):
+    for mapping_path in glob.glob(glob_path):
+        yield mapping_path.replace(page_filename, "").replace(".php", "").split("--")[1]
 
+
+def get_legacy_country_city_mappings(city, glob_path):
+    for mapping_path in glob.glob(glob_path % city):
+        yield os.path.basename(mapping_path).replace(".php", "").split("--")[0]
 
 
 def get_current_blog_post_file_content(blog_post_file_paths, title):
@@ -255,15 +288,34 @@ def get_current_blog_post_file_content(blog_post_file_paths, title):
         blog_post_file_paths.legacy_content_teaser_file_path)
     content = get_legacy_blog_post_content(
         blog_post_file_paths.legacy_content_full_file_path)
-    tags = [x for x in get_legacy_blog_post_tags(
+    tags = [x for x in get_legacy_blog_post_mappings(
         page_filename, blog_post_file_paths.legacy_blog_tags_glob_path)]
+    location = None
+
+    try:
+        location = [x for x in get_legacy_blog_post_mappings(
+            page_filename, blog_post_file_paths.legacy_blog_country_glob_path)][0]
+    except IndexError:
+        pass
+
+    try:
+        city = [x for x in get_legacy_blog_post_mappings(
+            page_filename, blog_post_file_paths.legacy_blog_city_glob_path)][0]
+
+        country = [x for x in get_legacy_country_city_mappings(
+            city, blog_post_file_paths.legacy_country_city_glob_path)][0]
+        location = "{0}/{1}".format(country, city)
+    except IndexError:
+        if not location:
+            raise ValueError(
+                "No country or city mapping found for {0}".format(page_filename))
 
     return CURRENT_BLOG_POST_FILE_CONTENT_TPL.format(**{
         "title": title,
         "slug": slug,
         "date": current_datestr,
         "tags": str(tags).replace("'", "\""),
-        "locations": "mars",
+        "locations": "[\"{0}\"]".format(location) if location else "[]",
         "summary": summary,
         "content": content})
 
