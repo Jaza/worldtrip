@@ -169,7 +169,7 @@ def get_title_from_slug(slug):
 def get_title_from_page_file(page_path):
     title = None
 
-    with open(page_path) as f:
+    with open(page_path, "r") as f:
         line = None
 
         while (line is None) or (line and (not title)):
@@ -249,7 +249,7 @@ def get_legacy_blog_post_content(file_path):
     content = ""
     passed_header = False
 
-    with open(file_path) as f:
+    with open(file_path, "r") as f:
         line = None
 
         while (line is None) or line:
@@ -323,14 +323,16 @@ def get_current_blog_post_file_content(blog_post_file_paths, title):
 def import_legacy_blog_post(legacy_page_file_path, dir_paths_in_repos):
     blog_post_file_paths = get_blog_post_file_paths(
         dir_paths_in_repos, legacy_page_file_path)
+    current_content_file_path = blog_post_file_paths.current_content_file_path
 
-    if os.path.isfile(blog_post_file_paths.current_content_file_path):
+    if os.path.isfile(current_content_file_path):
         return False
 
     title = get_title(legacy_page_file_path)
     content = get_current_blog_post_file_content(blog_post_file_paths, title)
 
-    # TODO: actually import blog posts here!
+    with open(current_content_file_path, "w") as f:
+        f.write(content)
 
     return True
 
@@ -379,7 +381,7 @@ def run():
 
     num_blog_posts_imported, num_blog_posts_existing = (
         import_legacy_blog_posts(dir_paths_in_repos))
-    print("Imported {0} legacy blog posts (TODO: actually import them!)".format(
+    print("Imported {0} legacy blog posts".format(
         num_blog_posts_imported))
     print("Did not import {0} already-imported legacy blog posts".format(
         num_blog_posts_existing))
