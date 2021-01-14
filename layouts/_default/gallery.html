@@ -19,7 +19,7 @@
   {{ end }}
 {{ end }}
 
-{{ $photos = sort $photos "Dir" "desc" }}
+{{ $photos = sort $photos "File.Path" "desc" }}
 
 {{ if $photos }}
     {{ range (.Paginate $photos).Pages }}
