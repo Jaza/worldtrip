@@ -23,22 +23,19 @@
 
 </div><!-- /.node -->
 
-{{ $comments := slice }}
-
-{{ $filePrefix := (print "/blog/" .File.BaseFileName "/") }}
-{{ $dirToRead := "content/blog/" }}
-{{ $pathToMatch := (print "^" .File.BaseFileName "--") }}
-
-{{ range (readDir $dirToRead) }}
-  {{ if findRE $pathToMatch .Name }}
-    {{ $filename := print "/blog/" .Name "/index.md" }}
-    {{ $comments = $comments | append ( $.Site.GetPage $filename ) }}
-  {{ end }}
-{{ end }}
-
+{{- $comments := slice -}}
+{{- $filePrefix := (print "/blog/" .File.BaseFileName "/") -}}
+{{- $dirToRead := "content/blog/" -}}
+{{- $pathToMatch := (print "^" .File.BaseFileName "--") -}}
+{{- range (readDir $dirToRead) -}}
+  {{- if findRE $pathToMatch .Name -}}
+    {{- $filename := print "/blog/" .Name "/index.md" -}}
+    {{- $comments = $comments | append ( $.Site.GetPage $filename ) -}}
+  {{- end -}}
+{{- end -}}
 {{- if $comments -}}
   {{- partial "blog_comments.html" (dict "site" $.Site "page" $.Page "comments" $comments) -}}
-{{ end }}
+{{- end -}}
 
 </div><!-- /#main -->
 </div><!-- /#main-wrapper -->

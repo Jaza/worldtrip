@@ -11,21 +11,18 @@
   <div class="links">
     <a href="{{ .RelPermalink }}" title="Read the rest of this posting." class="read-more">read more</a>
 
-    {{ $numComments := 0 }}
-
-    {{ $filePrefix := (print "/blog/" .File.BaseFileName "/") }}
-    {{ $dirToRead := "content/blog/" }}
-    {{ $pathToMatch := (print "^" .File.BaseFileName "--") }}
-
-    {{ range (readDir $dirToRead) }}
-      {{ if findRE $pathToMatch .Name }}
-        {{ $numComments = add $numComments 1 }}
-      {{ end }}
-    {{ end }}
-
-    {{ if $numComments }}
+    {{- $numComments := 0 -}}
+    {{- $filePrefix := (print "/blog/" .File.BaseFileName "/") -}}
+    {{- $dirToRead := "content/blog/" -}}
+    {{- $pathToMatch := (print "^" .File.BaseFileName "--") -}}
+    {{- range (readDir $dirToRead) -}}
+      {{- if findRE $pathToMatch .Name -}}
+        {{- $numComments = add $numComments 1 -}}
+      {{- end -}}
+    {{- end -}}
+    {{- if $numComments -}}
       &#149; <a href="{{ .RelPermalink }}#comment" title="Jump to the first comment of this posting.">{{ $numComments }} comment{{ if gt $numComments 1 }}s{{ end }}</a>
-    {{ end }}
+    {{- end -}}
   </div><!-- /.links -->
   </div><!-- /.content -->
 </div><!-- /.node -->
