@@ -19,8 +19,10 @@
   {{ end }}
 {{ end }}
 
+{{ $photos = sort $photos "Dir" "desc" }}
+
 {{ if $photos }}
-    {{ range (.Paginate $photos).Pages.Reverse }}
+    {{ range (.Paginate $photos).Pages }}
       {{ partial "galleryphoto.html" (dict "photo" . "galleryphotosbaseurl" $.Site.Params.galleryphotosbaseurl) }}
     {{ end }}
 
