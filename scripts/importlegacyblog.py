@@ -2,8 +2,11 @@
 import glob
 import os
 import re
-import sys
 from collections import namedtuple
+
+from importutils import (
+    CURRENT_BLOG_CONTENT_RELATIVE_PATH, get_current_repo_path, get_dir_path_in_repo,
+    print_progress_dot)
 
 
 LEGACY_REPO_PATH_ENVVAR_NAME = "WORLDTRIP_LEGACY_REPO_PATH"
@@ -14,7 +17,6 @@ LEGACY_BLOG_TAGS_RELATIVE_PATH = "mappings/blog_tags"
 LEGACY_BLOG_COUNTRY_RELATIVE_PATH = "mappings/blog_country"
 LEGACY_BLOG_CITY_RELATIVE_PATH = "mappings/blog_city"
 LEGACY_COUNTRY_CITY_RELATIVE_PATH = "mappings/country_city"
-CURRENT_BLOG_CONTENT_RELATIVE_PATH = "content/blog"
 
 LEGACY_BLOG_TITLE_LINE_PREFIX = "$title = '"
 LEGACY_BLOG_TITLE_LINE_SUFFIX = "';\n"
@@ -34,8 +36,6 @@ summary = \"\"\"
 """
 
 CURRENT_BLOG_POST_TZ_OFFSET = "+10:00"
-
-PRINT_PROGRESS_DOT_EVERY_X_ITEMS = 100
 
 
 DirPathsInRepos = namedtuple("DirPathsInRepos", [
@@ -73,31 +73,6 @@ def get_legacy_repo_path(legacy_repo_path):
                 LEGACY_REPO_PATH_ENVVAR_NAME, legacy_repo_path))
 
     return os.path.realpath(legacy_repo_path)
-
-
-def get_current_repo_path(this_script_path):
-    current_repo_path = os.path.realpath(
-        os.path.join(
-            os.path.dirname(os.path.realpath(this_script_path)),
-            ".."))
-
-    if not os.path.isdir(current_repo_path):
-        raise ValueError(
-            "Expected current repo path {0} is not a valid directory".format(
-                current_repo_path))
-
-    return current_repo_path
-
-
-def get_dir_path_in_repo(repo_path, dir_path):
-    path_in_repo = os.path.realpath(os.path.join(repo_path, dir_path))
-
-    if not os.path.isdir(path_in_repo):
-        raise ValueError((
-            "Expected directory {0} to exist in repo path {1} but unable to "
-            "find it").format(dir_path, repo_path))
-
-    return path_in_repo
 
 
 def get_dir_paths_in_repos(legacy_repo_path, current_repo_path):
@@ -335,16 +310,6 @@ def import_legacy_blog_post(legacy_page_file_path, dir_paths_in_repos):
         f.write(content)
 
     return True
-
-
-def print_progress_dot(i, num_items):
-    if i and ((not i % PRINT_PROGRESS_DOT_EVERY_X_ITEMS) or (i + 1 == num_items)):
-        sys.stdout.write(".")
-
-        if i + 1 == num_items:
-            sys.stdout.write("\n")
-
-        sys.stdout.flush()
 
 
 def import_legacy_blog_posts(dir_paths_in_repos):
