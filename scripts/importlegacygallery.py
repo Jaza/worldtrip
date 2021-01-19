@@ -13,6 +13,13 @@ LEGACY_GALLERY_ITEM_REGEX = (
     r"<\/div>\s*"
     r"<p>\s*<em>\s*(?P<desc>.+?(?=<\/em>))<\/em>\s*(\.\s*)?<\/p>")
 
+HTML_LINK_REGEX = r"<a href=\"(?P<url>[^\"]+)\">(?P<desc>[^>]+)<\/a>"
+
+
+def html_formatting_to_markdown(text):
+    new_text = re.sub(HTML_LINK_REGEX, "[\g<desc>](\g<url>)", text)
+    return new_text.replace("<strong>", "**").replace("</strong>", "**")
+
 
 def import_legacy_gallery_items_for_page(file_path):
     num_gallery_items_imported = 0
@@ -26,6 +33,9 @@ def import_legacy_gallery_items_for_page(file_path):
             content += line
 
     for m in re.finditer(LEGACY_GALLERY_ITEM_REGEX, content):
+        src = m.group("src")
+        filename = m.group("filename")
+        desc = html_formatting_to_markdown(m.group("desc"))
         num_gallery_items_imported += 1
 
     return num_gallery_items_imported
