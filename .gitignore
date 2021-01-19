@@ -11,3 +11,4 @@ hugo.linux
 # Python
 *.py[cod]
 __pycache__/
+venv/

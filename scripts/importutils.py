@@ -1,9 +1,18 @@
 import os
+import re
 import sys
 
 
 CURRENT_BLOG_CONTENT_RELATIVE_PATH = "content/blog"
 PRINT_PROGRESS_DOT_EVERY_X_ITEMS = 100
+
+
+def get_filename_from_path(page_path):
+    return os.path.splitext(os.path.basename(page_path))[0]
+
+
+def get_legacy_datestr_from_filename(page_filename):
+    return re.sub(r"\-\-.*$", "", page_filename)
 
 
 def get_current_repo_path(this_script_path):

@@ -6,7 +6,7 @@ from collections import namedtuple
 
 from importutils import (
     CURRENT_BLOG_CONTENT_RELATIVE_PATH, get_current_repo_path, get_dir_path_in_repo,
-    print_progress_dot)
+    get_filename_from_path, get_legacy_datestr_from_filename, print_progress_dot)
 
 
 LEGACY_REPO_PATH_ENVVAR_NAME = "WORLDTRIP_LEGACY_REPO_PATH"
@@ -104,19 +104,11 @@ def get_dir_paths_in_repos(legacy_repo_path, current_repo_path):
         current_content_path)
 
 
-def get_filename_from_path(page_path):
-    return os.path.splitext(os.path.basename(page_path))[0]
-
-
 def get_slug_from_filename(page_filename):
     return re.sub(
         r"^[0-9]{4}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\-[0-9]{2}\-\-",
         "",
         page_filename)
-
-
-def get_legacy_datestr_from_filename(page_filename):
-    return re.sub(r"\-\-.*$", "", page_filename)
 
 
 def get_current_datestr_from_legacy_datestr(legacy_datestr):
