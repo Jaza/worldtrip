@@ -1,14 +1,21 @@
 #!/usr/bin/env python
 import glob
+import os
 import re
+import shutil
 from collections import namedtuple
 
+import requests
 from slugify import slugify
 
 from importutils import (
     CURRENT_BLOG_CONTENT_RELATIVE_PATH, get_current_repo_path, get_dir_path_in_repo,
     get_filename_from_path, get_legacy_datestr_from_filename, print_progress_dot)
 
+
+GALLERY_ITEM_DOWNLOAD_PATH_ENVVAR_NAME = "WORLDTRIP_GALLERY_ITEM_DOWNLOAD_PATH"
+
+CURRENT_GALLERY_CONTENT_RELATIVE_PATH = "content/gallery"
 
 LEGACY_GALLERY_ITEM_REGEX = (
     r"<div[^>]*>\s*<img(\s+class=\"[^\"]+\")?\s*"
@@ -29,11 +36,34 @@ PARENTHESISED_TEXT_REGEX = r"\([^)]+\)"
 
 MAX_SLUG_LEN = 50
 
+CURRENT_GALLERY_FILE_CONTENT_TPL = """
++++
+draft = false
+headless = true
++++
+{desc}
+"""
+
 
 LegacyGalleryItem = namedtuple("LegacyGalleryItem", ["src", "filename", "desc"])
 
 
 LEGACY_FILENAME_TO_CURRENT_FILENAME_MAP_CACHE = {}
+
+
+def get_gallery_item_download_path(gallery_item_download_path):
+    if not gallery_item_download_path:
+        raise ValueError(
+            "Missing required environment variable {0}".format(
+                GALLERY_ITEM_DOWNLOAD_PATH_ENVVAR_NAME))
+
+    if not os.path.isdir(gallery_item_download_path):
+        raise ValueError((
+            "Environment variable {0} value '{1}' is not a valid "
+            "directory").format(
+                GALLERY_ITEM_DOWNLOAD_PATH_ENVVAR_NAME, gallery_item_download_path))
+
+    return os.path.realpath(gallery_item_download_path)
 
 
 def html_formatting_to_markdown(text):
@@ -57,7 +87,42 @@ def truncate_slug(current_slug, max_len):
     return new_slug
 
 
-def import_legacy_gallery_item(page_path, gallery_item, current_filename_index):
+def write_current_gallery_item(current_filename, current_gallery_path, desc):
+    gallery_dir_path = os.path.realpath(
+        os.path.join(current_gallery_path, "{0}.jpg".format(current_filename)))
+
+    # if not os.path.isdir(gallery_dir_path):
+    #     os.mkdir(gallery_dir_path)
+
+    gallery_file_path = os.path.realpath(
+        os.path.join(gallery_dir_path, "index.md"))
+
+    if os.path.isfile(gallery_file_path):
+        return
+
+    content = CURRENT_GALLERY_FILE_CONTENT_TPL.format(desc=desc)
+
+    # with open(gallery_file_path, "w") as f:
+    #     f.write(content)
+
+
+def download_legacy_gallery_file(
+        legacy_file_src, current_filename, gallery_item_download_path):
+    legacy_file_url = "https:{0}".format(legacy_file_src)
+    current_file_download_path = os.path.realpath(
+        os.path.join(gallery_item_download_path, "{0}.jpg".format(current_filename)))
+
+    if os.path.isfile(current_file_download_path):
+        return
+
+    # with requests.get(legacy_file_url, stream=True) as r:
+    #     with open(current_file_download_path, "wb") as f:
+    #         shutil.copyfileobj(r.raw, f, length=1024*1024)
+
+
+def import_legacy_gallery_item(
+        page_path, current_gallery_path, gallery_item_download_path,
+        gallery_item, current_filename_index):
     filename = gallery_item.filename
 
     if filename in LEGACY_FILENAME_TO_CURRENT_FILENAME_MAP_CACHE:
@@ -78,7 +143,8 @@ def import_legacy_gallery_item(page_path, gallery_item, current_filename_index):
         date_parts["minute"] += current_filename_index
 
     current_datestr = DATESTR_FORMAT_STR.format(**date_parts)
-    truncated_desc = re.sub(PARENTHESISED_TEXT_REGEX, "", gallery_item.desc)
+    desc = gallery_item.desc
+    truncated_desc = re.sub(PARENTHESISED_TEXT_REGEX, "", desc)
     current_slug = slugify(truncated_desc)
 
     if len(current_slug) > MAX_SLUG_LEN:
@@ -86,11 +152,18 @@ def import_legacy_gallery_item(page_path, gallery_item, current_filename_index):
 
     current_filename = "{0}--{1}".format(current_datestr, current_slug)
 
+    write_current_gallery_item(
+        current_filename, current_gallery_path, "_{0}_".format(desc))
+
+    download_legacy_gallery_file(
+        gallery_item.src, current_filename, gallery_item_download_path)
+
     return True
 
 
-def import_legacy_gallery_items_for_page(page_path):
-    num_gallery_items_imported = 0
+def import_legacy_gallery_items_for_page(
+        page_path, current_gallery_path, gallery_item_download_path):
+    num_embeds_migrated = 0
     content = ""
 
     with open(page_path, "r") as f:
@@ -106,18 +179,20 @@ def import_legacy_gallery_items_for_page(page_path):
         src = m.group("src")
         filename = m.group("filename")
         desc = html_formatting_to_markdown(m.group("desc"))
-        is_embed_migrated = import_legacy_gallery_item(
-            page_path, LegacyGalleryItem(src, filename, desc), current_filename_index)
+        is_imported = import_legacy_gallery_item(
+            page_path, current_gallery_path, gallery_item_download_path,
+            LegacyGalleryItem(src, filename, desc), current_filename_index)
 
-        if is_embed_migrated:
+        if is_imported:
             current_filename_index += 1
 
-        num_gallery_items_imported += 1
+        num_embeds_migrated += 1
 
-    return num_gallery_items_imported, current_filename_index
+    return current_filename_index, num_embeds_migrated
 
 
-def import_legacy_gallery_items(current_content_path):
+def import_legacy_gallery_items(
+        current_content_path, current_gallery_path, gallery_item_download_path):
     glob_path = "{0}/200*.html".format(current_content_path)
     page_paths = glob.glob(glob_path)
     num_items = len(page_paths)
@@ -126,24 +201,30 @@ def import_legacy_gallery_items(current_content_path):
 
     for i, page_path in enumerate(page_paths):
         _num_gallery_items_imported, _num_embeds_migrated = (
-            import_legacy_gallery_items_for_page(page_path))
+            import_legacy_gallery_items_for_page(
+                page_path, current_gallery_path, gallery_item_download_path))
         num_gallery_items_imported += _num_gallery_items_imported
         num_embeds_migrated += _num_embeds_migrated
-        print_progress_dot(i, num_items)
+        # print_progress_dot(i, num_items)
 
     return num_gallery_items_imported, num_embeds_migrated
 
 
 def run():
+    gallery_item_download_path = get_gallery_item_download_path(
+        os.environ.get(GALLERY_ITEM_DOWNLOAD_PATH_ENVVAR_NAME))
     current_repo_path = get_current_repo_path(__file__)
     current_content_path = get_dir_path_in_repo(
         current_repo_path, CURRENT_BLOG_CONTENT_RELATIVE_PATH)
+    current_gallery_path = get_dir_path_in_repo(
+        current_repo_path, CURRENT_GALLERY_CONTENT_RELATIVE_PATH)
 
     glob_path = "{0}/200*.html".format(current_content_path)
     print("Found {0} blog posts".format(len(glob.glob(glob_path))))
 
     num_gallery_items_imported, num_embeds_migrated = (
-        import_legacy_gallery_items(current_content_path))
+        import_legacy_gallery_items(
+            current_content_path, current_gallery_path, gallery_item_download_path))
     print("Imported {0} legacy gallery items (TODO: actually import them!)".format(
         num_gallery_items_imported))
     print("Migrated {0} legacy gallery embeds".format(num_embeds_migrated))
