@@ -93,8 +93,8 @@ def write_current_gallery_item(current_filename, current_gallery_path, desc):
     gallery_dir_path = os.path.realpath(
         os.path.join(current_gallery_path, "{0}.jpg".format(current_filename)))
 
-    # if not os.path.isdir(gallery_dir_path):
-    #     os.mkdir(gallery_dir_path)
+    if not os.path.isdir(gallery_dir_path):
+        os.mkdir(gallery_dir_path)
 
     gallery_file_path = os.path.realpath(
         os.path.join(gallery_dir_path, "index.md"))
@@ -104,8 +104,8 @@ def write_current_gallery_item(current_filename, current_gallery_path, desc):
 
     content = CURRENT_GALLERY_FILE_CONTENT_TPL.format(desc=desc)
 
-    # with open(gallery_file_path, "w") as f:
-    #     f.write(content)
+    with open(gallery_file_path, "w") as f:
+        f.write(content)
 
 
 def download_legacy_gallery_file(
@@ -117,9 +117,9 @@ def download_legacy_gallery_file(
     if os.path.isfile(current_file_download_path):
         return
 
-    # with requests.get(legacy_file_url, stream=True) as r:
-    #     with open(current_file_download_path, "wb") as f:
-    #         shutil.copyfileobj(r.raw, f, length=1024*1024)
+    with requests.get(legacy_file_url, stream=True) as r:
+        with open(current_file_download_path, "wb") as f:
+            shutil.copyfileobj(r.raw, f, length=1024*1024)
 
 
 def import_legacy_gallery_item(
@@ -180,8 +180,8 @@ def get_current_page_content(page_path):
 
 def write_current_page_content(page_path, content):
     pass
-    # with open(page_path, "w") as f:
-    #     f.write(content)
+    with open(page_path, "w") as f:
+        f.write(content)
 
 
 def replace_gallery_embed_markup(content, legacy_embed_markup, current_filename):
@@ -234,7 +234,7 @@ def import_legacy_gallery_items(
                 page_path, current_gallery_path, gallery_item_download_path))
         num_gallery_items_imported += _num_gallery_items_imported
         num_embeds_migrated += _num_embeds_migrated
-        # print_progress_dot(i, num_items)
+        print_progress_dot(i, num_items)
 
     return num_gallery_items_imported, num_embeds_migrated
 
@@ -254,7 +254,7 @@ def run():
     num_gallery_items_imported, num_embeds_migrated = (
         import_legacy_gallery_items(
             current_content_path, current_gallery_path, gallery_item_download_path))
-    print("Imported {0} legacy gallery items (TODO: actually import them!)".format(
+    print("Imported {0} legacy gallery items".format(
         num_gallery_items_imported))
     print("Migrated {0} legacy gallery embeds".format(num_embeds_migrated))
 
