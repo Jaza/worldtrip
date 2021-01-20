@@ -179,7 +179,6 @@ def get_current_page_content(page_path):
 
 
 def write_current_page_content(page_path, content):
-    pass
     with open(page_path, "w") as f:
         f.write(content)
 
