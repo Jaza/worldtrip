@@ -11,11 +11,20 @@
 {{ if .Content }}{{ .Content }}{{ end }}
 
 {{ if .Pages }}
+    {{- $blogPages := where .Site.Pages "Type" "blog" -}}
     <div class="item-list">
     <ul>
 
     {{ range sort .Pages "File.Path" }}
-      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> (count goes here)</li>
+      {{- $archYear := (replaceRE "^\\w+, " "" .Title) -}}
+      {{- $archMonth := (replaceRE ", \\d+$" "" .Title) -}}
+      {{- $blogPagesForMonth := slice -}}
+      {{- range $blogPages.ByDate -}}
+        {{- if and (eq (.Date.Format "2006") $archYear) (eq (.Date.Format "January") $archMonth) -}}
+          {{- $blogPagesForMonth = $blogPagesForMonth | append . -}}
+        {{- end -}}
+      {{- end -}}
+      <li><a href="{{ .RelPermalink }}">{{ .Title }}</a> ({{ $blogPagesForMonth | len }})</li>
     {{ end }}
 
     </ul>
