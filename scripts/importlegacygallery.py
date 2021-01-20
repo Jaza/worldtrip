@@ -44,6 +44,8 @@ headless = true
 {desc}
 """
 
+CURRENT_GALLERY_EMBED_MARKUP_TPL = "{{< galleryphoto \"%s\" >}}"
+
 
 LegacyGalleryItem = namedtuple("LegacyGalleryItem", ["src", "filename", "desc"])
 
@@ -126,7 +128,7 @@ def import_legacy_gallery_item(
     filename = gallery_item.filename
 
     if filename in LEGACY_FILENAME_TO_CURRENT_FILENAME_MAP_CACHE:
-        return False
+        return LEGACY_FILENAME_TO_CURRENT_FILENAME_MAP_CACHE[filename], False
 
     page_filename = get_filename_from_path(page_path)
     page_datestr = get_legacy_datestr_from_filename(page_filename)
@@ -158,12 +160,12 @@ def import_legacy_gallery_item(
     download_legacy_gallery_file(
         gallery_item.src, current_filename, gallery_item_download_path)
 
-    return True
+    LEGACY_FILENAME_TO_CURRENT_FILENAME_MAP_CACHE[filename] = current_filename
+
+    return current_filename, True
 
 
-def import_legacy_gallery_items_for_page(
-        page_path, current_gallery_path, gallery_item_download_path):
-    num_embeds_migrated = 0
+def get_current_page_content(page_path):
     content = ""
 
     with open(page_path, "r") as f:
@@ -173,20 +175,47 @@ def import_legacy_gallery_items_for_page(
             line = f.readline()
             content += line
 
+    return content
+
+
+def write_current_page_content(page_path, content):
+    pass
+    # with open(page_path, "w") as f:
+    #     f.write(content)
+
+
+def replace_gallery_embed_markup(content, legacy_embed_markup, current_filename):
+    embed_markup = (
+        CURRENT_GALLERY_EMBED_MARKUP_TPL % "{0}.jpg".format(current_filename))
+    return content.replace(legacy_embed_markup, embed_markup)
+
+
+def import_legacy_gallery_items_for_page(
+        page_path, current_gallery_path, gallery_item_download_path):
+    num_embeds_migrated = 0
     current_filename_index = 0
+
+    content = get_current_page_content(page_path)
 
     for m in re.finditer(LEGACY_GALLERY_ITEM_REGEX, content):
         src = m.group("src")
         filename = m.group("filename")
         desc = html_formatting_to_markdown(m.group("desc"))
-        is_imported = import_legacy_gallery_item(
+        legacy_embed_markup = m.group(0)
+        current_filename, is_imported = import_legacy_gallery_item(
             page_path, current_gallery_path, gallery_item_download_path,
             LegacyGalleryItem(src, filename, desc), current_filename_index)
+
+        content = replace_gallery_embed_markup(
+            content, legacy_embed_markup, current_filename)
 
         if is_imported:
             current_filename_index += 1
 
         num_embeds_migrated += 1
+
+    if num_embeds_migrated:
+        write_current_page_content(page_path, content)
 
     return current_filename_index, num_embeds_migrated
 
