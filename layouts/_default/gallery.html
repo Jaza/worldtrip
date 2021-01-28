@@ -10,19 +10,8 @@
 <div class="content">
 {{ if .Content }}{{ .Content }}{{ end }}
 
-{{ $photos := slice }}
-
-{{ range (readDir "content/gallery") }}
-  {{ if not (eq .Name "_index.html") }}
-    {{ $filename := print "/gallery/" .Name "/index.md" }}
-    {{ $photos = $photos | append ( $.Site.GetPage $filename ) }}
-  {{ end }}
-{{ end }}
-
-{{ $photos = sort $photos "File.Path" "desc" }}
-
-{{ if $photos }}
-    {{ range (.Paginate $photos).Pages }}
+{{ if .Pages }}
+    {{ range (.Paginate .Pages.Reverse).Pages }}
       {{ partial "galleryphoto.html" (dict "photo" . "galleryphotosbaseurl" $.Site.Params.galleryphotosbaseurl) }}
     {{ end }}
 

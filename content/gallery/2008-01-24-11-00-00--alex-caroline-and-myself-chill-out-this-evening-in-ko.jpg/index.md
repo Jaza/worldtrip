@@ -1,6 +1,5 @@
 
 +++
 draft = false
-headless = true
 +++
 _Alex, Caroline and myself (left to right) chill out this evening in Ko Tao._
