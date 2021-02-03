@@ -1,3 +1,10 @@
+{{- /*
+Gets an array with weighted tags.
+Based on tagadelic_build_weighted_tags() in tagadelic Drupal 4.7 module:
+https://www.drupal.org/project/tagadelic
+https://git.drupalcode.org/project/tagadelic/-/blob/4.7.x-2.0/tagadelic.module
+*/ -}}
+
 {{- .c.Scratch.Delete "weightedTags" -}}
 {{- .c.Scratch.Add "weightedTags" slice -}}
 {{- .c.Scratch.Delete "logCountTags" -}}
@@ -7,6 +14,11 @@
 {{- .c.Scratch.Delete "maxLogCount" -}}
 {{- .c.Scratch.Set "maxLogCount" -1e9 -}}
 {{- if .tags -}}
+
+  {{- /*
+  Find minimum and maximum log-count.
+  By our MatheMagician Steven Wittens aka UnConeD.
+  */ -}}
   {{- range .tags.Alphabetical -}}
     {{- $logCount := math.Log .Count -}}
     {{- $.c.Scratch.Add "logCountTags" (slice (dict "Title" .Page.Title "RelPermalink" .Page.RelPermalink "Count" .Count "LogCount" $logCount)) -}}
@@ -18,6 +30,10 @@
     {{- end -}}
   {{- end -}}
 
+  {{- /*
+  Note: we need to ensure the range is slightly too large to make sure even
+  the largest element is rounded down.
+  */ -}}
   {{- $maxMinusMin := sub ($.c.Scratch.Get "maxLogCount") ($.c.Scratch.Get "minLogCount") -}}
   {{- .c.Scratch.Delete "weightedTagsRange" -}}
   {{- .c.Scratch.Set "weightedTagsRange" (mul (cond (gt $maxMinusMin 0.1) $maxMinusMin 0.1) 1.0001) -}}
